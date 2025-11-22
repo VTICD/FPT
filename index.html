@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>Vòng quay 10 số – Vi mạch FPT University</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 Roboto, sans-serif;
+    background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #000 100%);
+    color: #e5e7eb;
+    text-align: center;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    padding: 14px 24px;
+  }
+
+  header img {
+    height: 95px; /* LOGO TO HƠN */
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #f97316;
+    text-shadow: 0 0 8px rgba(0, 0, 0, 0.7);
+  }
+
+  /* ----- WHEEL ----- */
+  #wheel-container {
+    position: relative;
+    width: 420px;
+    height: 420px;
+    margin: 24px auto 0 auto;
+  }
+
+  #wheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 10px solid #e5e7eb;
+    position: relative;
+    box-shadow: 0 0 25px rgba(15, 23, 42, 0.9);
+    /* 10 lát: mỗi lát 36° */
+    background: conic-gradient(
+      #facc15 0deg 36deg,   /* 1 vàng */
+      #22c55e 36deg 72deg,  /* 2 xanh lá */
+      #3b82f6 72deg 108deg, /* 3 xanh dương */
+      #ef4444 108deg 144deg,/* 4 đỏ */
+      #f97316 144deg 180deg,/* 5 cam */
+      #22c55e 180deg 216deg,/* 6 */
+      #3b82f6 216deg 252deg,/* 7 */
+      #ef4444 252deg 288deg,/* 8 */
+      #facc15 288deg 324deg,/* 9 */
+      #f97316 324deg 360deg /* 10 */
+    );
+    transition: transform 4s cubic-bezier(0.12, 0.94, 0.15, 1);
+    overflow: visible;
+  }
+
+  .label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px; /* căn giữa */
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.78);
+    color: #f9fafb;
+    font-size: 22px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Kim chỉ */
+  #pointer {
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 28px solid #fefce8;
+    z-index: 10;
+    filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.7));
+  }
+
+  /* Nút QUAY ở giữa */
+  #center-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: #facc15;
+    border: 10px solid #fef3c7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    color: #111827;
+    z-index: 20;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.2s;
+  }
+
+  #center-button:hover {
+    transform: translate(-50%, -50%) scale(1.03);
+    background: #fde047;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.7);
+  }
+
+  #center-button:active {
+    transform: translate(-50%, -50%) scale(0.97);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  /* ----- QUESTION BOX ----- */
+  #question-box {
+    display: none;
+    margin: 28px auto 16px auto;
+    padding: 20px 24px;
+    max-width: 740px;
+    background: rgba(15, 23, 42, 0.95);
+    border-radius: 16px;
+    border: 1px solid #334155;
+    text-align: left;
+  }
+
+  #question-box h2 {
+    margin-top: 0;
+    font-size: 22px;
+    color: #e5e7eb;
+  }
+
+  #answer {
+    display: none;
+    margin-top: 10px;
+    color: #4ade80;
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  #show-answer {
+    margin-top: 8px;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: none;
+    background: #22c55e;
+    color: #052e16;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 15px;
+  }
+
+  footer {
+    margin-top: 8px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: #9ca3af;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <!-- Đặt file logo cùng thư mục với tên: fpt_logo.png -->
+  <img src="fpt_logo.png" alt="FPT University logo" />
+  <h1>Vòng quay May mắn – Ngành Vi mạch &amp; Bán dẫn</h1>
+</header>
+
+<div id="wheel-container">
+  <div id="pointer"></div>
+  <div id="wheel"></div>
+  <div id="center-button">QUAY</div>
+</div>
+
+<div id="question-box">
+  <h2 id="question"></h2>
+  <button id="show-answer">Xem đáp án</button>
+  <div id="answer"></div>
+</div>
+
+<footer>
+  FPT University Open Day – mỗi số trên vòng quay tương ứng với 3 câu hỏi đời thường về ngành vi mạch – bán dẫn.
+</footer>
+
+<!-- Âm thanh: chuẩn bị spin.mp3 & ding.mp3 cùng thư mục -->
+<audio id="spin-sound" src="spin.mp3" preload="auto"></audio>
+<audio id="question-sound" src="ding.mp3" preload="auto"></audio>
+
+<script>
+  // ===== 30 CÂU HỎI ĐỜI THƯỜNG VỀ NGÀNH VI MẠCH – BÁN DẪN =====
+  // 10 nhóm, mỗi nhóm 3 câu → số 1..10
+  const questions = [
+    // Nhóm 1 – “Chip & đời sống”
+    { q: "Bạn nghĩ trong điện thoại, phần nào là 'bộ não' xử lý mọi thứ?",
+      a: "Đó là con chip xử lý (CPU/SoC) – chứa hàng tỷ transistor." },
+    { q: "Kể tên 3 thiết bị trong nhà bạn chắc chắn có chip bên trong?",
+      a: "Ví dụ: điện thoại, TV thông minh, máy giặt, router WiFi, laptop, đồng hồ thông minh..." },
+    { q: "Con chip nhỏ xíu nhưng quyết định điều gì trong thiết bị?",
+      a: "Quyết định tốc độ, khả năng xử lý, tính năng thông minh và độ 'mượt' của thiết bị." },
+
+    // Nhóm 2 – “Bán dẫn là gì?”
+    { q: "Nghe 'bán dẫn' có vẻ xa lạ. Thực ra nó là vật liệu giữa hai loại nào?",
+      a: "Nó nằm giữa chất dẫn điện (như kim loại) và chất cách điện (như nhựa)." },
+    { q: "Tại sao người ta chọn silicon để làm chip, chứ không chọn... vàng?",
+      a: "Silicon rẻ, rất nhiều trong tự nhiên, dễ tinh chế và có thể điều khiển tính dẫn điện bằng doping." },
+    { q: "Nếu không có chất bán dẫn, bạn có nghĩ sẽ có smartphone như bây giờ không?",
+      a: "Không – vì hầu hết thiết bị hiện đại đều dựa trên công nghệ bán dẫn." },
+
+    // Nhóm 3 – “Kỹ sư vi mạch làm gì?”
+    { q: "Kỹ sư vi mạch dành phần lớn thời gian làm việc với gì?",
+      a: "Máy tính, phần mềm mô phỏng và code mô tả phần cứng, chứ không phải tua-vít." },
+    { q: "Một ngày của kỹ sư vi mạch giống làm việc với... bản vẽ hay xây tường?",
+      a: "Giống làm việc với 'bản vẽ cực kỳ chi tiết' của con chip (từng cổng logic, đường dây...)." },
+    { q: "Nếu bạn thích tìm hiểu 'bên trong điện thoại có gì', ngành vi mạch có phù hợp không?",
+      a: "Rất phù hợp – vì bạn sẽ thực sự hiểu và tham gia thiết kế những thứ nằm bên trong đó." },
+
+    // Nhóm 4 – “Từ ý tưởng đến con chip thật”
+    { q: "Để có một con chip hoàn chỉnh cần ít nhất hai khâu lớn nào?",
+      a: "Thiết kế (design) và sản xuất (fabrication)." },
+    { q: "Việt Nam hiện nay mạnh hơn ở khâu nào: thiết kế hay sản xuất chip?",
+      a: "Hiện tại Việt Nam thiên về thiết kế, kiểm thử và dịch vụ liên quan đến chip." },
+    { q: "Nếu so với xây nhà, thiết kế vi mạch giống với công việc nào?",
+      a: "Giống kiến trúc sư vẽ bản thiết kế chi tiết trước khi xây nhà." },
+
+    // Nhóm 5 – “Cơ hội, nhu cầu nhân lực”
+    { q: "Vì sao nhiều quốc gia, trong đó có Việt Nam, đang nói nhiều về ngành bán dẫn?",
+      a: "Vì chip là nền tảng của mọi công nghệ, ai làm chủ được chip sẽ có lợi thế lớn về kinh tế và an ninh." },
+    { q: "Bạn nghĩ ngành này đang thừa hay thiếu kỹ sư?",
+      a: "Đang thiếu – rất nhiều công ty cần kỹ sư vi mạch, nhu cầu dự báo tăng mạnh." },
+    { q: "Học vi mạch xong, bạn có thể làm việc ở đâu?",
+      a: "Có thể làm ở công ty trong nước, làm remote cho công ty nước ngoài, hoặc làm việc ở nước ngoài." },
+
+    // Nhóm 6 – “Học gì ở cấp 3 để theo ngành?”
+    { q: "Ở cấp 3, những môn nào giúp bạn có nền tảng tốt để học vi mạch sau này?",
+      a: "Toán, Vật lý, Tin học và tiếng Anh." },
+    { q: "Có cần phải là 'học sinh siêu cấp' mới học được vi mạch không?",
+      a: "Không – quan trọng là chăm, kiên nhẫn, thích suy nghĩ logic và chịu khó tự học." },
+    { q: "Kỹ năng mềm nào cũng quan trọng với kỹ sư vi mạch?",
+      a: "Làm việc nhóm, trình bày ý tưởng, đọc hiểu tài liệu tiếng Anh, quản lý thời gian." },
+
+    // Nhóm 7 – “Phần cứng & phần mềm”
+    { q: "Khác biệt ngắn gọn giữa kỹ sư phần mềm và kỹ sư vi mạch là gì?",
+      a: "Phần mềm viết chương trình chạy trên chip; vi mạch thiết kế chính con chip đó." },
+    { q: "Nếu bạn thích 'vọc' mạch, vi xử lý, board mạch..., bạn nghiêng về hướng nào?",
+      a: "Nghiêng nhiều về phần cứng, vi mạch, hệ thống nhúng." },
+    { q: "Chip trong điện thoại mạnh hay yếu phụ thuộc vào ai?",
+      a: "Phụ thuộc vào đội thiết kế vi mạch (kiến trúc, tối ưu) và công nghệ sản xuất." },
+
+    // Nhóm 8 – “Học gì ở đại học?”
+    { q: "Sinh viên ngành vi mạch sẽ được học những kiến thức nền tảng nào?",
+      a: "Mạch điện, điện tử, logic số, cấu trúc máy tính, lập trình cơ bản..." },
+    { q: "Một số môn 'đặc sản' đặc trưng của ngành vi mạch là gì?",
+      a: "Thiết kế vi mạch số, vi mạch tương tự, thiết kế layout, FPGA, hệ thống trên chip (SoC)..." },
+    { q: "Sinh viên có được làm lab, project với kit thật không?",
+      a: "Có – thường được làm dự án với FPGA, kit nhúng, mạch demo, đồ án nhóm." },
+
+    // Nhóm 9 – “Chip trong các lĩnh vực hot”
+    { q: "Ô tô điện, xe tự lái cần chip cho những phần nào?",
+      a: "Động cơ, quản lý pin, cảm biến, camera, radar, hệ thống an toàn, kết nối..." },
+    { q: "Trong bệnh viện, chip xuất hiện ở đâu?",
+      a: "Trong máy chụp CT, MRI, monitor nhịp tim, máy truyền dịch thông minh, hệ thống quản lý dữ liệu..." },
+    { q: "AI (trí tuệ nhân tạo) chạy trên loại phần cứng nào?",
+      a: "Chạy trên GPU, AI accelerator hoặc các chip chuyên dụng về AI." },
+
+    // Nhóm 10 – “Hiểu lầm & tương lai”
+    { q: "Hiểu lầm thường gặp: 'Vi mạch là ngành rất khô khan, chỉ toàn toán khó'. Bạn nghĩ sao?",
+      a: "Có toán, nhưng công việc rất sáng tạo vì thiết kế ra phần cứng cho sản phẩm thực tế, ảnh hưởng trực tiếp đến cuộc sống." },
+    { q: "Nếu sau này bạn muốn làm trong AI, IoT, robot, ô tô thông minh..., học vi mạch có lợi gì?",
+      a: "Bạn hiểu sâu phần cứng, từ đó tối ưu hệ thống, phối hợp tốt với phần mềm để tạo ra sản phẩm mạnh hơn." },
+    { q: "Sau khi có kinh nghiệm kỹ sư, bạn có thể phát triển theo hướng nào khác ngoài 'kỹ thuật thuần'?",
+      a: "Có thể chuyển sang quản lý kỹ thuật, quản lý dự án, product manager, khởi nghiệp trong lĩnh vực chip..." }
+  ];
+
+  // Chia 30 câu thành 10 nhóm 3 câu
+  const groups = [];
+  for (let i = 0; i < 10; i++) {
+    groups.push(questions.slice(i * 3, i * 3 + 3));
+  }
+
+  const wheel = document.getElementById("wheel");
+  const centerButton = document.getElementById("center-button");
+  const spinSound = document.getElementById("spin-sound");
+  const questionSound = document.getElementById("question-sound");
+
+  let spinning = false;
+  let currentAngle = 0;
+
+  // Tạo 10 label 1–10 quanh vòng
+  for (let i = 0; i < 10; i++) {
+    const label = document.createElement("div");
+    label.className = "label";
+    const angle = i * 36 + 18; // giữa mỗi lát
+    label.style.transform =
+      "rotate(" + angle + "deg) translate(0, -160px) rotate(" + (-angle) + "deg)";
+    label.textContent = (i + 1).toString();
+    wheel.appendChild(label);
+  }
+
+  centerButton.addEventListener("click", spinWheel);
+  document.getElementById("show-answer").addEventListener("click", () => {
+    document.getElementById("answer").style.display = "block";
+  });
+
+  function safePlay(audio) {
+    if (!audio) return;
+    try {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    } catch (e) {}
+  }
+
+  function spinWheel() {
+    if (spinning) return;
+    spinning = true;
+
+    // phát nhạc quay
+    safePlay(spinSound);
+
+    const extra = Math.floor(Math.random() * 360);
+    const rounds = 10 * 360;
+    const angle = currentAngle + rounds + extra;
+    currentAngle = angle % 360;
+
+    wheel.style.transform = "rotate(" + angle + "deg)";
+
+    setTimeout(() => {
+      spinning = false;
+      // pointer ở trên (0°), +18° để căn giữa lát
+      const normalized = (360 - currentAngle + 18) % 360;
+      const index = Math.floor(normalized / 36); // 0..9
+      showQuestion(index);
+    }, 4100);
+  }
+
+  function showQuestion(slotIndex) {
+    const group = groups[slotIndex];
+    const randomIdx = Math.floor(Math.random() * group.length);
+    const qa = group[randomIdx];
+
+    document.getElementById("question").innerText = qa.q;
+    document.getElementById("answer").innerText = "Đáp án: " + qa.a;
+    document.getElementById("question-box").style.display = "block";
+    document.getElementById("answer").style.display = "none";
+
+    // phát tiếng "ting" khi câu hỏi hiện ra
+    safePlay(questionSound);
+  }
+</script>
+
+</body>
+</html>
