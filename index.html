@@ -63,7 +63,8 @@
       #facc15 288deg 324deg,/* 9 */
       #f97316 324deg 360deg /* 10 */
     );
-    transition: transform 4s cubic-bezier(0.12, 0.94, 0.15, 1);
+    /* Thời gian quay ~6 giây */
+    transition: transform 10s cubic-bezier(0.12, 0.94, 0.15, 1);
     overflow: visible;
   }
 
@@ -305,6 +306,7 @@
 
   let spinning = false;
   let currentAngle = 0;
+  let pressStart = null; // thời điểm bắt đầu nhấn chuột / chạm
 
   // Tạo 10 label 1–10 quanh vòng
   for (let i = 0; i < 10; i++) {
@@ -317,7 +319,35 @@
     wheel.appendChild(label);
   }
 
-  centerButton.addEventListener("click", spinWheel);
+  // Nhấn giữ chuột: bắt đầu đo
+  centerButton.addEventListener("mousedown", () => {
+    if (spinning) return;
+    pressStart = Date.now();
+  });
+
+  // Nhả chuột: tính thời gian giữ -> lực quay
+  centerButton.addEventListener("mouseup", () => {
+    if (spinning || pressStart === null) return;
+    const pressMs = Date.now() - pressStart;
+    pressStart = null;
+    spinWheel(pressMs);
+  });
+
+  // Hỗ trợ cảm ứng (điện thoại / tablet)
+  centerButton.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    if (spinning) return;
+    pressStart = Date.now();
+  }, { passive: false });
+
+  centerButton.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    if (spinning || pressStart === null) return;
+    const pressMs = Date.now() - pressStart;
+    pressStart = null;
+    spinWheel(pressMs);
+  }, { passive: false });
+
   document.getElementById("show-answer").addEventListener("click", () => {
     document.getElementById("answer").style.display = "block";
   });
@@ -330,27 +360,40 @@
     } catch (e) {}
   }
 
-  function spinWheel() {
+  function spinWheel(pressMs) {
     if (spinning) return;
     spinning = true;
 
     // phát nhạc quay
     safePlay(spinSound);
 
-    const extra = Math.floor(Math.random() * 360);
-    const rounds = 10 * 360;
-    const angle = currentAngle + rounds + extra;
+    // ----- map thời gian giữ chuột -> số vòng quay -----
+    const MIN_PRESS = 100;   // 0.1s: chạm nhanh
+    const MAX_PRESS = 3000;  // 3s: giữ lâu
+    const MIN_ROT   = 5;     // ít nhất 5 vòng
+    const MAX_ROT   = 18;    // tối đa ~18 vòng
+
+    // giới hạn thời gian trong khoảng [MIN_PRESS, MAX_PRESS]
+    const clamped = Math.max(MIN_PRESS, Math.min(MAX_PRESS, pressMs));
+    const t = (clamped - MIN_PRESS) / (MAX_PRESS - MIN_PRESS); // 0..1
+
+    // số vòng quay tỉ lệ với thời gian giữ
+    const rotations = MIN_ROT + t * (MAX_ROT - MIN_ROT); // 5..18 vòng
+
+    const randomStop = Math.floor(Math.random() * 360); // để ra số khác nhau
+    const angle = currentAngle + rotations * 360 + randomStop;
     currentAngle = angle % 360;
 
     wheel.style.transform = "rotate(" + angle + "deg)";
 
+    // Đợi xong animation rồi mới hiện câu hỏi
     setTimeout(() => {
       spinning = false;
       // pointer ở trên (0°), +18° để căn giữa lát
       const normalized = (360 - currentAngle + 18) % 360;
       const index = Math.floor(normalized / 36); // 0..9
       showQuestion(index);
-    }, 4100);
+    }, 6200); // hơi lớn hơn 6s một chút
   }
 
   function showQuestion(slotIndex) {
